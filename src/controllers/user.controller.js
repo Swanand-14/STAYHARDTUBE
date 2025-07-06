@@ -238,7 +238,47 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
 return res.status(200).json(new ApiResponce(200,user,"Account Details Updated"))
 })
 
+const updateUserAvatar = asyncHandler(async(req,res)=>{
+    const avatarLocalPath = req.file?.path;
+    if(!avatarLocalPath){
+        throw new ApiError(400,"Avatar missing")
+
+    }
+    const avatar = uploadOnCloudinary(avatarLocalPath);
+    if(!avatar.url){
+        ApiError(400,"Error while Uploading to Cloudinary")
+
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id,{$set:{
+avatar:avatar.url
+    }},{
+        new:true
+    }).select("-password")
+    return res.status(200).json(new ApiResponce(200,user,"Updated Avatar Image successfuly"))
+     
+})
+
+const UpdateCoverImage = asyncHandler(async(req,res)=>{
+    const coverImageLocalPath = req.file?.path
+    if(!coverImageLocalPath){
+        throw new ApiError(400,"Cover image path not available")
+    }
+    const Cover = await uploadOnCloudinary(coverImageLocalPath)
+    if(!Cover){
+        throw new ApiError(400,"Error while uploading file")
+    }
+    const user = await User.findByIdAndUpdate(req.user?._id,{
+        $set:{
+            coverimage:Cover.url
+        }
+    },{
+        new:true
+    }).select("-passowrd")
+
+    return res.status(200).json(new ApiResponce(200,user,"Updated Cover Image successfuly"))
+})
+
 
  
- export {registerUser,loginUser,logoutUser,refreshAccessToken} 
+ export {registerUser,loginUser,logoutUser,refreshAccessToken,UpdateCoverImage,updateUserAvatar} 
  
