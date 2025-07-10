@@ -1,6 +1,7 @@
 import express from 'express'
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import subscriptionRouter from './Routes/subscription.routes.js'
 const app = express()
 app.use(cors({
     origin:process.env.CORS_ORIGIN,
@@ -14,5 +15,6 @@ app.use(cookieParser())
 import userRouter from './Routes/user.routes.js'
 //Routes declaration
 app.use("/api/v1/users",userRouter)
+app.use("/api/v1/subscriptions",subscriptionRouter)
 
 export {app}
