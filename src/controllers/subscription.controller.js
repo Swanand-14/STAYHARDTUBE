@@ -49,3 +49,36 @@ if(!deletedSub){
 return res.status(200).json(new ApiResponce(200,{},"Unsubscribed Successfully"))
 
 })
+
+export const getSubscibedChannelList = asyncHandler(async(req,res)=>{
+    const userId = req.user._id
+    const subscriptions = await Subscription.aggregate([
+        {
+            $match:{
+                subscriber:new mongoose.Types.ObjectId(userId),
+            },
+        },
+        {
+            $lookup:{
+                from:"users",
+                localField:"channel",
+                foreignField:"_id",
+                as:"channelDetails",
+            },
+           
+        },
+        {
+            $unwind:"$channelDetails"
+        },
+        {
+            $project:{
+                _id:0,
+                fullname:"$channelDetails.fullname",
+                username:"$channelDetails.username",
+                avatar:"$channelDetails.avatar",
+            }
+        }
+    ])
+
+    return res.status(200).json(new ApiResponce(200,subscriptions,"Fetched subscribed channels"));
+})

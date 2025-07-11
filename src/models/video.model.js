@@ -17,8 +17,8 @@ const VideoSchema = new Schema({
         required:true
 
     },
-    discription:{
-        type:Number,//cloudnary
+    description:{
+        type:String,//cloudnary
         required:true
 
     },
@@ -35,6 +35,6 @@ const VideoSchema = new Schema({
         ref:"User"
     }
 
-},{timeseries:true})
+},{timestamps:true})
 VideoSchema.plugin(mongooseAggregatePaginate)
 export const Video = mongoose.model("Video",VideoSchema)
