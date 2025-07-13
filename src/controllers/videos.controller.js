@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponce } from "../utils/ApiResponse.js";
-import uploadOnCloudinary from "../utils/cloudinary.js";
+import uploadOnCloudinary, { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import mongoose from "mongoose";
 
@@ -56,5 +56,47 @@ export const deleteVideo = asyncHandler(async(req,res)=>{
     await video.deleteOne();
 
     return res.status(200).json(new ApiResponce(200,{},"Video deleted Succesfully"))
+
+})
+
+export const updateVideoDetails = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+    const {title,description} = req.body
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Video invalid")
+    }
+    const video = await Video.findById(videoId);
+    if(!video){
+        throw new ApiError(400,"Video Not Found")
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+       throw new ApiError(403,"You are not authorised to update the video")
+    }
+
+    if(title) video.title = title;
+    if(description) video.description = description;
+    const newThumbnailLocalPath = req.file?.path;
+    if(newThumbnailLocalPath){
+        const publicId = video.thumbnail.split("/").pop().split(".")[0];
+        await deleteFromCloudinary(publicId);
+        const newThumbnail = await uploadOnCloudinary(newThumbnailLocalPath);
+        if(!newThumbnail?.url || !newThumbnail?.public_id){
+            throw new ApiError(500,"Error uploading new thumbnail");
+        }
+
+        video.thumbnail = newThumbnail.url
+
+            
+        
+    }
+
+    console.log("thumbnail",req.file?.path);
+
+    await video.save();
+
+    return res.status(200).json(new ApiResponce(200,video,"Video details updated successfuly"))
+
+
 
 })

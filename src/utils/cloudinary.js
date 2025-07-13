@@ -1,5 +1,6 @@
 import {v2 as cloudinary} from 'cloudinary'
 import fs from 'fs'
+import { ApiError } from './ApiError.js';
 
 
 
@@ -24,6 +25,18 @@ import fs from 'fs'
         } catch (error) {
             fs.unlinkSync(localFilePath)
             return null;
+            
+        }
+    }
+
+export const deleteFromCloudinary = async(publicId) => {
+        try {
+            const result = await cloudinary.uploader.destroy(publicId);
+            return result;
+            
+        } catch (error) {
+            console.error("Cloudinary deletion error:", error);
+    throw new ApiError(500, error.message || "Failed to delete image from Cloudinary");
             
         }
     }
