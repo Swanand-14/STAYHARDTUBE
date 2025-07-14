@@ -4,6 +4,9 @@ import { ApiResponce } from "../utils/ApiResponse.js";
 import uploadOnCloudinary, { deleteFromCloudinary } from "../utils/cloudinary.js";
 import { Video } from "../models/video.model.js";
 import mongoose from "mongoose";
+import { View } from "../models/View.model.js";
+import { Like } from "../models/likes.model.js";
+
 
 
 export const uploadVideoAndThumbnail = asyncHandler(async(req,res)=>{
@@ -100,3 +103,102 @@ export const updateVideoDetails = asyncHandler(async(req,res)=>{
 
 
 })
+
+export const getSingleVideo = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid Video ID")
+    }
+
+    const video  = await Video.findById(videoId).populate("owner","username fullname avatar").lean();
+    if(!video){
+        throw new ApiError(404,"Video not found")
+    }
+
+    return res.status(200).json(new ApiResponce(200,video,"Video Fetched successfuly"))
+
+})
+
+
+export const getAllVideos = asyncHandler(async(req,res)=>{
+    const videos = await Video.find({isPublished:true}).sort({createdAt:-1}).select("-__v");
+    res.status(200).json(
+        new ApiResponce(200,videos,"All videos fetched successfully")
+    );
+
+})
+
+export const addViewToVideo = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+    const userId = req.user._id
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid Video Id")
+    }
+    const video = await Video.findById(videoId);
+    if(!video){
+        throw new ApiError(404,"Video does not exist")
+    }
+    const alreadyViewed = await View.findOne({video:videoId,user:userId});
+    if(!alreadyViewed){
+        await View.create({video:videoId,user:userId});
+        video.views+=1
+        await video.save();
+
+    }
+
+    return res.status(200).json(new ApiResponce(200,{views:video.views},"View recorded succesfully"))
+
+})
+
+export const toggleLikeDislike = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+    const {type} = req.body
+
+    if(!["like","dislike"].includes(type)){
+        throw new ApiError(400,"Type must be like or dislike")
+    }
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Video Id Invalid")
+    }
+    const userId = req.user._id
+    const existing = await Like.findOne({user:userId,video:videoId})
+    if(!existing){
+        await Like.create({user:userId,video:videoId,type});
+        return res.status(200).json(new ApiResponce(200,{},`Video ${type} succesfully`));
+    }
+    if(existing.type===type){
+        await Like.deleteOne({_id:existing._id});
+        return res.status(200).json(new ApiResponce(200,{},`${type} removed successfully`))
+    }
+
+    existing.type = type
+    await existing.save();
+    return res.status(200).json(new ApiResponce(200,{},`Video ${type}d successfully`))
+})
+
+export const getVideoReactons = asyncHandler(async(req,res)=>{
+    const {videoId} = req.params
+    const userId = req.user._id
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid Video Id")
+    }
+    const [likesCount,dislikeCount,userReaction] = await Promise.all(
+        [
+            Like.countDocuments({video:videoId,type:"like"}),
+            Like.countDocuments({video:videoId,type:"dislike"}),
+            Like.findOne({video:videoId,user:userId})
+        ]
+    );
+    return res.status(200).json(new ApiResponce(200,{likes:likesCount,dislikes:dislikeCount,
+        userReaction:userReaction?.type || null,
+    },"Reaction data fetched"))
+})
+
+
+
+
+
+
+
+
+
