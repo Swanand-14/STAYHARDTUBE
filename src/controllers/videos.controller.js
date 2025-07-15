@@ -6,6 +6,7 @@ import { Video } from "../models/video.model.js";
 import mongoose from "mongoose";
 import { View } from "../models/View.model.js";
 import { Like } from "../models/likes.model.js";
+import { Subscription } from "../models/subscription.model.js";
 
 
 
@@ -192,6 +193,32 @@ export const getVideoReactons = asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponce(200,{likes:likesCount,dislikes:dislikeCount,
         userReaction:userReaction?.type || null,
     },"Reaction data fetched"))
+})
+
+export const getChannelVideos = asyncHandler(async(req,res)=>{
+    const {channelId} = req.params
+    if(!mongoose.Types.ObjectId.isValid(channelId)){
+        throw new ApiError(400,"Invalid Channel Id")
+    }
+    const videos = await Video.find({
+        owner:channelId,
+        isPublished:true
+    }).sort({createdAt:-1})
+    .select("title thumbnail views createdAt")
+    .lean();
+
+    return res.status(200).json(new ApiResponce(200,videos,"Fetched channel's videos"))
+
+
+
+})
+export const getSubscriptionFeed = asyncHandler(async(req,res)=>{
+    const userId = req.user._id
+    const subscriptions = await Subscription.find({subscriber:userId}).select("channel");
+    const channelIds = subscriptions.map((sub)=>sub.channel)
+    const videos = await Video.find({owner:{$in:channelIds}}).sort({createdAt:-1})
+    .populate("owner","username fullname avatar").lean()
+    return res.status(200).json(new ApiResponce(200,videos,"Fetched videos from subcribed channels"))
 })
 
 
