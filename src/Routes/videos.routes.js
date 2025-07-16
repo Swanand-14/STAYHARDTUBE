@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/Auth.middleware.js";
-import {addViewToVideo, deleteVideo, getAllVideos, getChannelVideos, getSingleVideo, getSubscriptionFeed, getVideoReactons, toggleLikeDislike, updateVideoDetails, uploadVideoAndThumbnail} from "../controllers/videos.controller.js";
+import {addViewToVideo, deleteVideo, getAllVideos, getChannelVideos, getSingleVideo, getSubscriptionFeed, getTrendingVideos, getVideoReactons, searchVideos, toggleLikeDislike, updateVideoDetails, uploadVideoAndThumbnail} from "../controllers/videos.controller.js";
 
 
 
@@ -16,7 +16,8 @@ videoRouter.route("/upload").post(verifyJWT,upload.fields([
     {name:"videoFile",maxCount:1},
     {name:"thumbnail",maxCount:1},
 ]),uploadVideoAndThumbnail)
-
+videoRouter.route("/search").get(searchVideos)
+videoRouter.route("/trending").get(getTrendingVideos)
 videoRouter.route("/:videoId").delete(verifyJWT,deleteVideo)
 videoRouter.route("/:videoId").patch(verifyJWT,upload.single("thumbnail"),updateVideoDetails)
 videoRouter.route("/:videoId").get(getSingleVideo)
@@ -26,6 +27,9 @@ videoRouter.route("/:videoId/reaction").post(verifyJWT,toggleLikeDislike)
 videoRouter.route("/:videoId/reaction").get(verifyJWT,getVideoReactons)
 videoRouter.route("/channel/:channelId").get(verifyJWT,getChannelVideos)
 videoRouter.route("/feed/subscription").get(verifyJWT,getSubscriptionFeed)
+
+
+
 
 export default videoRouter
 

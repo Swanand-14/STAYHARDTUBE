@@ -221,6 +221,41 @@ export const getSubscriptionFeed = asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponce(200,videos,"Fetched videos from subcribed channels"))
 })
 
+export const searchVideos = asyncHandler(async(req,res)=>{
+    const searchQuery = req.query.query;
+
+if (typeof searchQuery !== "string" || !searchQuery.trim()) {
+  return res.status(400).json({
+    success: false,
+    message: "Search query is required",
+  });
+}
+
+
+    const videos = await Video.find({
+        title:{
+            $regex:searchQuery,$options:"i"
+        },
+        isPublished:true
+    }).populate("owner","username fullname avatar")
+    .select("title thumbnail views createAt owner")
+    .sort({createdAt:-1})
+    .lean()
+
+    return res.status(200).json(new ApiResponce(200,videos,"Search Results"))
+})
+
+export const getTrendingVideos = asyncHandler(async(req,res)=>{
+    const videos = await Video.find({isPublished:true})
+    .sort({views:-1})
+    .limit(10)
+    .populate("owner","username fullname avatar")
+    .lean()
+
+    return res.status(200).json(new ApiResponce(200,videos,"Trending videos fetched successfully"))
+
+})
+
 
 
 
