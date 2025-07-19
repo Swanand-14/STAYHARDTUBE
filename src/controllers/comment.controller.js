@@ -30,8 +30,11 @@ export const getCommentsByVideo = asyncHandler(async(req,res)=>{
     if(!videoId){
         throw new ApiError(400,"Video Id is required")
     }
-    const comments = await Comment.find({video:videoId})
-    .populate("user","username avatar")
+    const comments = await Comment.find({video:videoId,parentComment:null})
+    .populate("user","username avatar").populate({
+        path:"replies",
+        populate:{path:"user",select:"username avatar"}
+    })
     .sort({createdAt:-1});
 
     return res.status(200).json(new ApiResponce(200,comments,"Comments fetched successfuly"))
@@ -86,5 +89,28 @@ export const toggleLikeComment = asyncHandler(async(req,res)=>{
 
 })
 
+export const replyToComment = asyncHandler(async(req,res)=>{
+    const {parentCommentId} = req.params;
+    const {content} = req.body;
+    const userId = req.user._id
 
-// 6875ed54f0fa38c48834480d
+    const parentComment = await Comment.findById(parentCommentId);
+    if(!parentComment){
+        throw new ApiError(400,"Parent comment not found")
+    }
+    const reply = await Comment.create({
+        content,
+        video:parentComment.video,
+        user:userId,
+        parentComment:parentCommentId
+
+    });
+    parentComment.replies.push(reply._id);
+    await parentComment.save();
+    return res.status(200).json(new ApiResponce(200,reply,"Reply added successfully"))
+
+})
+
+
+
+//687b15be327de22489e3aa72
