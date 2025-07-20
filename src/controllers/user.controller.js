@@ -4,6 +4,7 @@
  import uploadOnCloudinary from '../utils/cloudinary.js'
  import { ApiResponce } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const {TokenExpiredError} = jwt;
 
@@ -224,7 +225,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
     if(!fullname || !email){
         throw new ApiError(400,"All fields are required")
     }
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
         $set:{
@@ -245,8 +246,8 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
 
     }
 
-    const avatar = uploadOnCloudinary(avatarLocalPath);
-    if(!avatar.url){
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+    if(!avatar?.url){
         throw new ApiError(400,"Error while Uploading to Cloudinary")
 
     }
@@ -255,7 +256,7 @@ avatar:avatar.url
     }},{
         new:true
     }).select("-password")
-    return res.status(200).json(new ApiResponce(200,user,"Updated Avatar Image successfuly"))
+    return res.status(200).json(new ApiResponce(200,UpdatedUser,"Updated Avatar Image successfuly"))
      
 })
 
@@ -309,18 +310,23 @@ const getUserChannelProfile = asyncHandler(async(req,res)=>{
 },{
     $addFields:{
     subsciberCount:{
-        $size: "subscribers"
+        $size: "$subscribers"
     },
     channelSubscribedToCount:{
-        $size:"subscribed_to"
+        $size:"$subscribed_to"
     },
-    isSubscibed:{
-        $cond:{
-            if:{$in:[req.user?._id,"$subscribers.subsciber"]},
-            then:true,
-            else:false
-        }
+    isSubscribed: {
+  $in: [
+    req.user?._id,
+    {
+      $map: {
+        input: "$subscribers",
+        as: "s",
+        in: "$$s.subscriber"
+      }
     }
+  ]
+}
 
 }},
 {
@@ -351,7 +357,7 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
   const user = await User.aggregate([
     {
         $match:{
-            _id:mongoose.Types.ObjectId(req.user._id)
+            _id:new mongoose.Types.ObjectId(req.user._id)
         }
     },
     {

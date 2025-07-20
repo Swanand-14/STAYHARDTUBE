@@ -7,11 +7,12 @@ import mongoose from "mongoose";
 import { View } from "../models/View.model.js";
 import { Like } from "../models/likes.model.js";
 import { Subscription } from "../models/subscription.model.js";
+import { User } from "../models/user.model.js";
 
 
 
 export const uploadVideoAndThumbnail = asyncHandler(async(req,res)=>{
-    const {title,description} = req.body
+    const {title,description,tags=[]} = req.body
     if(!title || !description){
         throw new ApiError(400,"Title and Description are required")
     }
@@ -35,6 +36,7 @@ export const uploadVideoAndThumbnail = asyncHandler(async(req,res)=>{
         videoFile:uploadVideo.url,
         thumbnail:uploadThumbnail.url,
         owner:req.user._id,
+        tags,
     })
 
     return res.status(200).json(new ApiResponce(200,video,"Video uploaded successfully"))
@@ -65,7 +67,7 @@ export const deleteVideo = asyncHandler(async(req,res)=>{
 
 export const updateVideoDetails = asyncHandler(async(req,res)=>{
     const {videoId} = req.params
-    const {title,description} = req.body
+    const {title,description,tags} = req.body
     if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400,"Video invalid")
     }
@@ -80,6 +82,9 @@ export const updateVideoDetails = asyncHandler(async(req,res)=>{
 
     if(title) video.title = title;
     if(description) video.description = description;
+    if(tags && Array.isArray(tags)){
+        video.tags = tags;
+    }
     const newThumbnailLocalPath = req.file?.path;
     if(newThumbnailLocalPath){
         const publicId = video.thumbnail.split("/").pop().split(".")[0];
@@ -144,6 +149,9 @@ export const addViewToVideo = asyncHandler(async(req,res)=>{
         await View.create({video:videoId,user:userId});
         video.views+=1
         await video.save();
+        await User.findByIdAndUpdate(userId,{
+            $addToSet:{watchhistory:video._id}
+        });
 
     }
 
@@ -254,6 +262,28 @@ export const getTrendingVideos = asyncHandler(async(req,res)=>{
 
     return res.status(200).json(new ApiResponce(200,videos,"Trending videos fetched successfully"))
 
+})
+
+export const getVideoByTag = asyncHandler(async(req,res)=>{
+    const {tag} = req.params;
+    if(!tag){
+        throw new ApiError(400,"Tag is required")
+    }
+    const videos = await Video.find({
+        tags:tag,
+        isPublished:true
+    }).sort({
+        createdAt:-1
+    })
+    .populate("owner","username fullname avatar")
+    .lean()
+
+    return res.status(200).json(new ApiResponce(200,videos,`Video with tag ${tag} fetched successfully`))
+})
+
+export const getAllTags = asyncHandler(async(req,res)=>{
+    const tags = await Video.distinct("tags");
+    return res.status(200).json(new ApiResponce(200,tags,"All tags fetched"));
 })
 
 

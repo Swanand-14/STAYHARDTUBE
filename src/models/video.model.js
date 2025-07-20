@@ -33,6 +33,11 @@ const VideoSchema = new Schema({
     owner:{
         type:Schema.Types.ObjectId,
         ref:"User"
+    },
+    tags:{
+        type:[String],
+        enum:["motivation","education","fitness","dopamine-bait","focus","spiritual","vlog"],
+        default:[],
     }
 
 },{timestamps:true})
