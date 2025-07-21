@@ -46,6 +46,22 @@ const userSchema = new Schema({
     },
     refreshToken:{
         type:String
+    },
+    role:{
+        type:String,
+        enum:["user","inspiration","admin"],
+        default:"user"
+    },
+    tags:{
+        type:[String],
+        default:[],
+        validate:{
+            validator:function (val){
+                if(this.role === 'inspiration') return true;
+                return val.length === 0;
+            },
+            message:'Only inspiration users can have tags'
+        }
     }
 
 },{
