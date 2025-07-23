@@ -400,6 +400,28 @@ const getWatchHistory = asyncHandler(async(req,res)=>{
   return res.status(200).json(new ApiResponce(200,user[0].watchHistory,"Watch History fetched successfully"))
 })
 
+export const toggleWatchLater = asyncHandler(async(req,res)=>{
+    const userId = req.user._id
+    const {videoId} = req.params;
+    const user = await User.findById(userId)
+    if(!user){
+        throw new ApiError("User not found")
+    }
+    const alreadyAdded = user.watchlater.includes(videoId)
+    let message;
+    if(alreadyAdded){
+        user.watchlater.pull(videoId)
+        message = "Video removed from watchLater"
+
+    }else{
+        user.watchlater.push(videoId);
+        message = "Video added to watchLater"
+    }
+
+    await user.save()
+    return res.status(200).json(new ApiResponce(200,{},message))
+})
+
 
  
  export {registerUser,loginUser,logoutUser,refreshAccessToken,UpdateCoverImage,changeCurrentPassword,updateUserAvatar,getWatchHistory,getUserChannelProfile,updateAccountDetails,getCurrentUser} 
