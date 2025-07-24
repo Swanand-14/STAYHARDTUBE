@@ -31,3 +31,5 @@ export const  getAllInspirations = asyncHandler(async(req,res)=>{
   const inspirations = await Inspiration.find();
   return res.status(200).json(new ApiResponce(200,inspirations,"All inspirations fetched "))
 })
+
+

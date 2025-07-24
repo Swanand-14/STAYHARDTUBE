@@ -35,9 +35,9 @@ const VideoSchema = new Schema({
         ref:"User"
     },
     tags:{
-        type:[String],
-        enum:["motivation","education","fitness","dopamine-bait","focus","spiritual","vlog"],
-        default:[],
+        type:[String]
+        
+    
     }
 
 },{timestamps:true})

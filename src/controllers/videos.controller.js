@@ -8,6 +8,7 @@ import { View } from "../models/View.model.js";
 import { Like } from "../models/likes.model.js";
 import { Subscription } from "../models/subscription.model.js";
 import { User } from "../models/user.model.js";
+import { Inspiration } from "../models/inspirations.model.js";
 
 
 
@@ -276,15 +277,18 @@ export const getVideoByTag = asyncHandler(async(req,res)=>{
         createdAt:-1
     })
     .populate("owner","username fullname avatar")
-    .lean()
+    .lean();
+    const inspirations = await Inspiration.find({tags:tag}).lean();
 
-    return res.status(200).json(new ApiResponce(200,videos,`Video with tag ${tag} fetched successfully`))
+    return res.status(200).json(new ApiResponce(200,{videos,inspirations},`Video with tag ${tag} fetched successfully`))
 })
 
 export const getAllTags = asyncHandler(async(req,res)=>{
     const tags = await Video.distinct("tags");
     return res.status(200).json(new ApiResponce(200,tags,"All tags fetched"));
 })
+
+
 
 
 
