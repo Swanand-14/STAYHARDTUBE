@@ -40,6 +40,16 @@ export const unfollowInspiration = asyncHandler(async(req,res)=>{
 
 })
 
+export const getFollowedInspirations = asyncHandler(async(req,res)=>{
+    const userId = req.user._id
+    const inspirations = await Follow.find({user:userId}).populate
+    ("inspiration","fullname avatar tags bio")
+    .lean()
+
+    return res.status(200).json(new ApiResponce(200,inspirations,"Followed inspirations fetched"))
+
+})
+
 
 
 

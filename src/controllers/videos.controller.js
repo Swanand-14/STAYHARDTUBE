@@ -9,6 +9,8 @@ import { Like } from "../models/likes.model.js";
 import { Subscription } from "../models/subscription.model.js";
 import { User } from "../models/user.model.js";
 import { Inspiration } from "../models/inspirations.model.js";
+import { Follow } from "../models/Follow.model.js";
+import { followInspiration } from "./follow.controller.js";
 
 
 
@@ -287,6 +289,35 @@ export const getAllTags = asyncHandler(async(req,res)=>{
     const tags = await Video.distinct("tags");
     return res.status(200).json(new ApiResponce(200,tags,"All tags fetched"));
 })
+
+export const getSuggestedVideosFromFollows = asyncHandler(async(req,res)=>{
+    const follows = await Follow.find({user:req.user._id})
+    .populate("inspiration","tags")
+    .lean();
+    const tagSet = new Set()
+    follows.forEach((f)=>{f.inspiration.tags.forEach(tag => tagSet.add(tag));
+    
+})
+
+if(tagSet.size === 0){
+    return res.status(200).json(new ApiResponce(200,[],"No tags found"))
+}
+
+const videos = await Video.find({
+    tags:{$in:Array.from(tagSet)},
+    isPublished:true,
+
+}).sort({createdAt:-1})
+.populate("owner","fullname username avatar")
+.lean()
+
+ return res.status(200).json(new ApiResponce(200,videos,"Suggested videos based on followed inspirations"))
+
+
+
+})
+
+
 
 
 
