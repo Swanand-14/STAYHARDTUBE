@@ -8,7 +8,7 @@ const commentSchema = new mongoose.Schema({
     video:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Video",
-        required:true,
+        
     },
     user:{
         type:mongoose.Schema.Types.ObjectId,
@@ -31,7 +31,12 @@ const commentSchema = new mongoose.Schema({
             type:mongoose.Schema.Types.ObjectId,
             ref:"Comment"
         }
-    ]
+    ],
+    post:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Post",
+
+    }
     
     
    

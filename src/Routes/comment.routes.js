@@ -1,11 +1,13 @@
 import { Router } from "express";
 
 import { verifyJWT } from "../middlewares/Auth.middleware.js";
-import { deleteComment, getCommentsByVideo, postComment, replyToComment, toggleLikeComment, updateComment } from "../controllers/comment.controller.js";
+import { deleteComment, getComments, postComment, replyToComment, toggleLikeComment, updateComment } from "../controllers/comment.controller.js";
 
 const commentRouter = Router();
 commentRouter.post("/",verifyJWT,postComment)
-commentRouter.route("/:videoId").get(getCommentsByVideo)
+commentRouter.route("/video/:videoId").get(getComments)
+commentRouter.route("/post/:postId").get(getComments)
+
 commentRouter.route("/:commentId").delete(verifyJWT,deleteComment)
 commentRouter.route("/:commentId").post(verifyJWT,updateComment)
 commentRouter.route("/toggle-like/:commentId").post(verifyJWT,toggleLikeComment)

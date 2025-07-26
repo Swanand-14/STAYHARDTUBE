@@ -3,40 +3,66 @@ import { Video } from "../models/video.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponce } from "../utils/ApiResponse.js";
+import { Post } from "../models/posts.model.js";
 
 export const postComment = asyncHandler(async(req,res)=>{
-    const {videoId,content} = req.body;
-    if(!videoId || !content){
-        throw new ApiError(400,"Both video ID and content are required")
+    const {videoId,postId,content} = req.body;
+    if(!content){
+        throw new ApiError(400,"Content is required")
 
     }
-
-    const video = await Video.findById(videoId);
-    if(!video){
-        throw new ApiError(400,"Video Not Found")
-    }
-    const comment = await Comment.create({
+    if (!videoId && !postId) {
+    throw new ApiError(400, "Either videoId or postId is required");
+}
+    let commentData = {
         content,
-        video:videoId,
-        user:req.user._id,
-    });
+        user:req.user._id
+    }
+    if(videoId){
+        const video  = await Video.findById(videoId);
+        if(!video)throw new ApiError(400,"Video not found");
+        commentData.video = videoId;
+    }
+    if(postId){
+        const post = await Post.findById(postId);
+        if(!post)throw new ApiError(400,"Post not found");
+        commentData.post = postId;
+    }
+
+    const comment = await Comment.create(commentData);
+    
+    
+    
 
     return res.status(201).json(new ApiResponce(200,comment,"Comment Added Successfully"));
 
 })
 
-export const getCommentsByVideo = asyncHandler(async(req,res)=>{
-    const {videoId} = req.params
-    if(!videoId){
-        throw new ApiError(400,"Video Id is required")
+export const getComments = asyncHandler(async(req,res)=>{
+    const {videoId,postId} = req.params
+    if(!videoId && !postId){
+        throw new ApiError(400,"Either postId or videoId required")
     }
-    const comments = await Comment.find({video:videoId,parentComment:null})
+    let comments;
+    if(videoId){
+        comments = await Comment.find({video:videoId,parentComment:null})
     .populate("user","username avatar").populate({
         path:"replies",
         populate:{path:"user",select:"username avatar"}
     })
     .sort({createdAt:-1});
 
+    }
+    if(postId){
+         comments = await Comment.find({post:postId,parentComment:null})
+    .populate("user","username avatar").populate({
+        path:"replies",
+        populate:{path:"user",select:"username avatar"}
+    })
+    .sort({createdAt:-1});
+
+    }
+    
     return res.status(200).json(new ApiResponce(200,comments,"Comments fetched successfuly"))
 })
 
@@ -110,6 +136,8 @@ export const replyToComment = asyncHandler(async(req,res)=>{
     return res.status(200).json(new ApiResponce(200,reply,"Reply added successfully"))
 
 })
+
+
 
 
 
