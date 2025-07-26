@@ -18,6 +18,7 @@ import videoRouter from './Routes/videos.routes.js'
 import commentRouter from './Routes/comment.routes.js'
 import inspirationRouter from './Routes/inspiration.routes.js'
 import followRouter from './Routes/follow.routes.js'
+import postsRouter from './Routes/posts.routes.js'
 //Routes declaration
 app.use("/api/v1/users",userRouter)
 app.use("/api/v1/subscriptions",subscriptionRouter)
@@ -25,6 +26,8 @@ app.use("/api/v1/videos",videoRouter)
 app.use("/api/v1/comments",commentRouter)
 app.use("/api/v1/inspiration",inspirationRouter)
 app.use("/api/v1/follow-inspiration",followRouter)
+app.use("/api/v1/posts",postsRouter)
+
 
 
 export {app}
